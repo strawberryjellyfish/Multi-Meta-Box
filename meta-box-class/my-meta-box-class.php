@@ -132,13 +132,13 @@ if ( ! class_exists( 'Multi_Meta_Box' ) ) :
     $this->add_missed_values();
     if ( isset( $meta_box['use_with_theme'] ) )
       if ( $meta_box['use_with_theme'] === true ) {
-        $this->class_path = get_stylesheet_directory_uri() . '/multi-meta-box-class';
+        $this->class_path = get_stylesheet_directory_uri() . '/meta-box-class';
       } elseif ( $meta_box['use_with_theme'] === false ) {
-      $this->class_path = plugins_url( 'multi-meta-box-class', plugin_basename( dirname( __FILE__ ) ) );
+      $this->class_path = plugins_url( 'meta-box-class', plugin_basename( dirname( __FILE__ ) ) );
     } else {
       $this->class_path = $meta_box['use_with_theme'];
     } else {
-      $this->class_path = plugins_url( 'multi-meta-box-class', plugin_basename( dirname( __FILE__ ) ) );
+      $this->class_path = plugins_url( 'meta-box-class', plugin_basename( dirname( __FILE__ ) ) );
     }
 
     // Add metaboxes
