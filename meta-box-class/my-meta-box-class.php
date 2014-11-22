@@ -814,9 +814,9 @@ if ( ! class_exists( 'Multi_Meta_Box' ) ) :
     echo "<input type='hidden' name='{$name}[id]' value='{$value['id']}'/>";
     echo "<input type='hidden' name='{$name}[url]' value='{$value['url']}'/>";
     if ( ! $has_image ) {
-      echo "<input class='{$multiple} {$remove_class} button simplePanelimageUpload' id='{$id}' value='Upload Image' type='button'/>";
+      echo "<input class='{$multiple} {$remove_class} button simplePanelimageUpload' id='{$id}' value='Add Image' type='button'/>";
     } elseif ( ! $hide_remove ) {
-      echo "<input class='{$multiple} button  simplePanelimageUploadclear' id='{$id}' value='Remove Image' type='button'/>";
+      echo "<input class='{$multiple} button simplePanelimageUploadclear' id='{$id}' value='Remove Image' type='button'/>";
     }
     $this->show_field_end( $field, $meta );
   }

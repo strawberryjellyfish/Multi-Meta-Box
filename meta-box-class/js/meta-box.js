@@ -341,14 +341,14 @@ jQuery(document).ready(function($) {
           } else if ($(el).hasClass("simplePanelimageUpload")) {
             $(el).removeClass("simplePanelimageUpload").addClass('simplePanelimageUploadclear').val('Remove Image');
           } else {
-            $(el).removeClass("simplePanelimageUploadclear").addClass('simplePanelimageUpload').val('Upload Image');
+            $(el).removeClass("simplePanelimageUploadclear").addClass('simplePanelimageUpload').val('Add Image');
           }
         },
         replaceFileUploadClass: function(el) {
           if ($(el).hasClass("simplePanelfileUpload")) {
             $(el).removeClass("simplePanelfileUpload").addClass('simplePanelfileUploadclear').val('Remove File');
           } else {
-            $(el).removeClass("simplePanelfileUploadclear").addClass('simplePanelfileUpload').val('Upload File');
+            $(el).removeClass("simplePanelfileUploadclear").addClass('simplePanelfileUpload').val('Add File');
           }
         },
         setPreview: function(stype, ShowFlag) {
