@@ -19,7 +19,7 @@
  * All credit to all previous authors for laying down the groundwork and
  * providing inspiration.
  *
- * @version 3.2.2
+ * @version 3.2.3
  * @copyright 2014
  * @author Robert Miller (email: rob@strawberryjellyfish.com)
  * @link http://strawberryjellyfish.com
@@ -155,7 +155,7 @@ if ( ! class_exists( 'Multi_Meta_Box' ) ) :
 
 
   /**
-   * Load all Javascript and CSS
+   * Load all JavaScript and CSS
    *
    * @since 1.0
    * @access public
@@ -171,10 +171,10 @@ if ( ! class_exists( 'Multi_Meta_Box' ) ) :
      */
     global $typenow;
     if ( in_array( $typenow, $this->_meta_box['pages'] ) && $this->is_edit_page() ) {
-      // Enqueuee Meta Box Style
+      // Enqueue Meta Box Style
       wp_enqueue_style( 'mmb-meta-box', $plugin_path . '/css/meta-box.css' );
 
-      // Enqueuee Meta Box Scripts
+      // Enqueue Meta Box Scripts
       wp_enqueue_script( 'mmb-meta-box', $plugin_path . '/js/meta-box.js', array( 'jquery' ), null, true );
 
       // Make upload feature work event when custom post type doesn't support 'editor'
@@ -207,8 +207,6 @@ if ( ! class_exists( 'Multi_Meta_Box' ) ) :
     if ( ! $this->has_field( 'select' ) )
       return;
     $plugin_path = $this->class_path;
-    // Enqueue JQuery UI, use proper version.
-
     // Enqueue JQuery select2 library, use proper version.
     wp_enqueue_style( 'mmb-multiselect-select2-css', $plugin_path . '/js/select2/select2.css', array(), null );
     wp_enqueue_script( 'mmb-multiselect-select2-js', $plugin_path . '/js/select2/select2.js', array( 'jquery' ), false, true );
@@ -771,7 +769,7 @@ if ( ! class_exists( 'Multi_Meta_Box' ) ) :
     if ( $has_file )
       echo "<input type='button' class='{$multiple} button simplePanelfileUploadclear' id='{$id}' value='Remove File' data-mime_type='{$type}' data-ext='{$ext}'/>";
     else
-      echo "<input type='button' class='{$multiple} button simplePanelfileUpload' id='{$id}' value='Upload File' data-mime_type='{$type}' data-ext='{$ext}'/>";
+      echo "<input type='button' class='{$multiple} button simplePanelfileUpload' id='{$id}' value='Add File' data-mime_type='{$type}' data-ext='{$ext}'/>";
 
     $this->show_field_end( $field, $meta );
   }
@@ -804,26 +802,11 @@ if ( ! class_exists( 'Multi_Meta_Box' ) ) :
     $hide_remove  = isset( $field['hide_remove'] ) ? $field['hide_remove'] : false;
     $remove_class  = $hide_remove ? 'hideRemove' : '';
 
-    // calculate a height and width for an image
-    if ( is_array( $size ) ) {
-      $width = $size[0];
-      $height = $size[1];
-    } else {
-      if ( in_array( $size, array( 'thumbnail', 'medium', 'large' ) ) ) {
-        $sizes['width'] = get_option( $size . '_size_w' );
-        $sizes['height'] = get_option( $size . '_size_h' );
-        $sizes['crop'] = (bool) get_option( $size . '_crop' );
-      } elseif ( isset( $_wp_additional_image_sizes[ $size ] ) ) {
-        $sizes = array(
-          'width' => $_wp_additional_image_sizes[ $size ]['width'],
-          'height' => $_wp_additional_image_sizes[ $size ]['height'],
-          'crop' =>  $_wp_additional_image_sizes[ $size ]['crop']
-        );
-      }
-      $width = $sizes['width'];
-      $height = $sizes['height'];
-    }
+    if ( ! is_array( $size ))
+      $size = $this->get_width_height($size);
 
+    $width = $size[0];
+    $height = $size[1];
     $image = $has_image ? wp_get_attachment_image_src( $value['id'], $size ) : array( $this->class_path . '/images/photo.png', 150, 150 );
     echo "<span class='simplePanelImagePreview'>";
     echo "<img class='{$class}' src='{$image[0]}' style='height: auto; max-height: {$height}px; width: auto; max-width: {$width}px;' />";
@@ -2201,6 +2184,30 @@ if ( ! class_exists( 'Multi_Meta_Box' ) ) :
     return trim( str_replace( range( 0, 9 ), '', $str ) );
   }
 
+
+  /**
+   * get_width_height return numeric width and height from WordPress image size
+   *
+   * @author Robert Miller <rob@strawberryjellyfish.com>
+   * @since 3.2.3
+   * @access public
+   * @param string  $str
+   * @return array(width, height)
+   */
+  public function get_width_height( $size ) {
+    if ( in_array( $size, array( 'thumbnail', 'medium', 'large' ) ) ) {
+      $sizes['width'] = get_option( $size . '_size_w' );
+      $sizes['height'] = get_option( $size . '_size_h' );
+      $sizes['crop'] = (bool) get_option( $size . '_crop' );
+    } elseif ( isset( $_wp_additional_image_sizes[ $size ] ) ) {
+      $sizes = array(
+        'width' => $_wp_additional_image_sizes[ $size ]['width'],
+        'height' => $_wp_additional_image_sizes[ $size ]['height'],
+        'crop' =>  $_wp_additional_image_sizes[ $size ]['crop']
+      );
+    }
+    return array($sizes['width'], $sizes['height']);
+  }
 
   /**
    * load_textdomain
