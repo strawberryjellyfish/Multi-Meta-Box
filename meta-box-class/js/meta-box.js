@@ -1,19 +1,21 @@
 /**
- * All Types Meta Box Class JS
+ * Multi Meta Box Class JS
  *
- * JS used for the custom metaboxes and other form items.
+ * JavaScript required by multi meta boxes.
+ * Robert Miller <rob@strawberryjellyfish.com>
  *
- * Copyright 2011 - 2013 Ohad Raz (admin@bainternet.info)
+ * Derived from work on All Types Meta Box Class
+ * by Ohad Raz <admin@bainternet.info>
  * @since 1.0
  */
 
-var $ =jQuery.noConflict();
+var $ = jQuery.noConflict();
 
 var e_d_count = 0;
 var Ed_array = Array;
 //fix editor on window resize
 jQuery(document).ready(function($) {
-  //editor rezise fix
+  //editor resize fix
   $(window).resize(function() {
     $.each(Ed_array, function() {
       var ee = this;
@@ -24,14 +26,15 @@ jQuery(document).ready(function($) {
     });
   });
 });
-function update_repeater_fields(){
-    _metabox_fields.init();
+
+function update_repeater_fields() {
+  _metabox_fields.init();
 }
 //metabox fields object
 var _metabox_fields = {
   oncefancySelect: false,
-  init: function(){
-    if (!this.oncefancySelect){
+  init: function() {
+    if (!this.oncefancySelect) {
       this.fancySelect();
       this.oncefancySelect = true;
     }
@@ -40,45 +43,51 @@ var _metabox_fields = {
     this.load_time_picker();
     this.load_date_picker();
     this.load_color_picker();
+    this.load_slider();
 
-    // repater Field
-    $(".at-re-toggle").live('click', function() {
-      $(this).parent().find('.repeater-table').toggle('slow');
+    // repeater Field
+    $(".mmb-re-toggle").unbind('click').on('click', function() {
+      $(this).parent().find('.mmb-repeater-table').toggle('fast');
     });
-    // repeater sortable
-    $('.repeater-sortable').sortable({
+    $('.mmb-repeater-remove-button').unbind('click').on('click', function() {
+      if (jQuery(this).parent().hasClass("mmb-repeater-control")) {
+        jQuery(this).parent().parent().remove();
+      } else {
+        jQuery(this).parent().remove();
+      }
+    });
+    $('.mmb-repeater-sortable').sortable({
       opacity: 0.6,
       revert: true,
       cursor: 'move',
-      handle: '.at_re_sort_handle',
-      placeholder: 'at_re_sort_highlight'
+      handle: '.mmb-repeater-sort-handle',
+      placeholder: 'mmb-repeater-sort-highlight'
     });
-    //$('.repeater-sortable').sortable( "option", "handle", ".at_re_sort_handle" );
   },
-  fancySelect: function(){
-    if ($().select2){
-      $(".at-select, .at-posts-select, .at-tax-select").each(function (){
-        if(! $(this).hasClass('no-fancy'))
+  fancySelect: function() {
+    if ($().select2) {
+      $(".mmb-select, .mmb-posts-select, .mmb-tax-select").each(function() {
+        if (!$(this).hasClass('no-fancy'))
           $(this).select2();
       });
-    }  
+    }
   },
-  get_query_var: function(name){
+  get_query_var: function(name) {
     var match = RegExp('[?&]' + name + '=([^&#]*)').exec(location.href);
     return match && decodeURIComponent(match[1].replace(/\+/g, ' '));
   },
-  load_code_editor: function(){
+  load_code_editor: function() {
     $(".code_text").each(function() {
 
       // if a code editor is already present, do nothing... #94
-      if($(this).next('.CodeMirror').length) return;
+      if ($(this).next('.CodeMirror').length) return;
 
       var lang = $(this).attr("data-lang");
       //php application/x-httpd-php
       //css text/css
       //html text/html
       //javascript text/javascript
-      switch(lang){
+      switch (lang) {
         case 'php':
           lang = 'application/x-httpd-php';
           break;
@@ -94,8 +103,8 @@ var _metabox_fields = {
         default:
           lang = 'application/x-httpd-php';
       }
-      var theme  = $(this).attr("data-theme");
-      switch(theme){
+      var theme = $(this).attr("data-theme");
+      switch (theme) {
         case 'default':
           theme = 'default';
           break;
@@ -108,7 +117,7 @@ var _metabox_fields = {
         default:
           theme = 'default';
       }
-      
+
       var editor = CodeMirror.fromTextArea(document.getElementById($(this).attr('id')), {
         lineNumbers: true,
         matchBrackets: true,
@@ -127,105 +136,137 @@ var _metabox_fields = {
       e_d_count++;
     });
   },
-  load_conditinal: function(){
-    $(".conditinal_control").click(function(){
-      if($(this).is(':checked')){
-        $(this).next().show('fast');    
-      }else{
-        $(this).next().hide('fast');    
+  load_conditinal: function() {
+    $(".conditinal_control").click(function() {
+      if ($(this).is(':checked')) {
+        $(this).next().show('fast');
+      } else {
+        $(this).next().hide('fast');
       }
     });
   },
-  load_time_picker: function(){  
-    $('.at-time').each( function() {
-      
-      var $this   = $(this),
-            format   = $this.attr('rel'),
-            aampm    = $this.attr('data-ampm');
-        if ('true' == aampm)
-          aampm = true;
-        else
-          aampm = false;
+  load_time_picker: function() {
+    $('.mmb-time').each(function() {
 
-        $this.timepicker( { showSecond: true, timeFormat: format, ampm: aampm } );
-      
+      var $this = $(this),
+        format = $this.attr('rel'),
+        aampm = $this.attr('data-ampm');
+      if ('true' == aampm)
+        aampm = true;
+      else
+        aampm = false;
+
+      $this.timepicker({
+        showSecond: true,
+        timeFormat: format,
+        ampm: aampm
+      });
+
     });
   },
   load_date_picker: function() {
-    $('.at-date').each( function() {
-      
-      var $this  = $(this),
-          format = $this.attr('rel');
+    $('.mmb-date').each(function() {
 
-      $this.datepicker( { showButtonPanel: true, dateFormat: format } );
-      
+      var $this = $(this),
+        format = $this.attr('rel');
+
+      $this.datepicker({
+        showButtonPanel: true,
+        dateFormat: format
+      });
+
     });
   },
-  load_color_picker: function(){
-    if ($('.at-color-iris').length>0)
-      $('.at-color-iris').wpColorPicker(); 
+
+  load_slider: function() {
+    $('.mmb-slider').each(function() {
+      var sliderdiv = $(this),
+        options = sliderdiv.data(),
+        slider_input = sliderdiv.next('input');
+
+      sliderdiv.slider({
+        value: options['value'],
+        min: options['min'],
+        max: options['max'],
+        step: options['step'],
+        animate: "fast",
+        slide: function(event, ui) {
+          $(slider_input).val(ui.value);
+        }
+      });
+      $(slider_input).on('change', function() {
+        sliderdiv.slider('value', this.value);
+      });
+    });
+  },
+
+  load_color_picker: function() {
+    if ($('.mmb-color-iris').length > 0)
+      $('.mmb-color-iris').wpColorPicker();
   },
 };
 //call object init in delay
-window.setTimeout('_metabox_fields.init();',2000);
+window.setTimeout('_metabox_fields.init();', 2000);
 
 //upload fields handler
 var simplePanelmedia;
-jQuery(document).ready(function($){
-  var simplePanelupload =(function(){
+jQuery(document).ready(function($) {
+  var simplePanelupload = (function() {
     var inited;
     var file_id;
     var file_url;
     var file_type;
-    function init (){
+
+    function init() {
       return {
         image_frame: new Array(),
         file_frame: new Array(),
-        hooks:function(){
-          $(document).on('click','.simplePanelimageUpload,.simplePanelfileUpload', function( event ){
+        hooks: function() {
+          $(document).on('click', '.simplePanelimageUpload,.simplePanelfileUpload,.simplePanelimageUploadclear,.simplePanelfileUploadclear', function(event) {
             event.preventDefault();
-            if ($(this).hasClass('simplePanelfileUpload'))
-              inited.upload($(this),'file');
-            else
-              inited.upload($(this),'image');
-          });
-
-          $('.simplePanelimageUploadclear,.simplePanelfileUploadclear').live('click', function( event ){
-            event.preventDefault();
-            inited.set_fields($(this));
-            $(inited.file_url).val("");
-            $(inited.file_id).val("");
-            if ($(this).hasClass('simplePanelimageUploadclear')){
-              inited.set_preview('image',false);
-              inited.replaceImageUploadClass($(this));
-            }else{
-              inited.set_preview('file',false);
-              inited.replaceFileUploadClass($(this));
+            event.stopPropagation();
+            if ($(this).hasClass('simplePanelfileUpload') || $(this).hasClass('simplePanelimageUpload')) {
+              if ($(this).hasClass('simplePanelfileUpload')) {
+                inited.upload($(this), 'file');
+              } else {
+                inited.upload($(this), 'image');
+              }
+            } else {
+              inited.setFields($(this));
+              $(inited.file_url).val("");
+              $(inited.file_id).val("");
+              if ($(this).hasClass('simplePanelimageUploadclear')) {
+                inited.setPreview('image', false);
+                inited.replaceImageUploadClass($(this));
+              } else {
+                inited.setPreview('file', false);
+                inited.replaceFileUploadClass($(this));
+              }
             }
-          });     
+          });
         },
-        set_fields: function (el){
+        setFields: function(el) {
           inited.file_url = $(el).prev();
           inited.file_id = $(inited.file_url).prev();
         },
-        upload:function(el,utype){
-          inited.set_fields(el)
+        upload: function(el, utype) {
+          inited.setFields(el)
           if (utype == 'image')
-            inited.upload_Image($(el));
+            inited.uploadImage($(el));
           else
-            inited.upload_File($(el));
+            inited.uploadFile($(el));
         },
-        upload_File: function(el){
+        uploadFile: function(el) {
           // If the media frame already exists, reopen it.
           var mime = $(el).attr('data-mime_type') || '';
           var ext = $(el).attr("data-ext") || false;
           var name = $(el).attr('id');
-          var multi = ($(el).hasClass("multiFile")? true: false);
-          
-          if ( typeof inited.file_frame[name] !== "undefined")  {
-            if (ext){
-              inited.file_frame[name].uploader.uploader.param( 'uploadeType', ext);
-              inited.file_frame[name].uploader.uploader.param( 'uploadeTypecaller', 'my_meta_box' );
+          var multi = ($(el).hasClass("multiFile") ? true : false);
+
+          if (typeof inited.file_frame[name] !== "undefined") {
+            if (ext) {
+              inited.file_frame[name].uploader.uploader.param('uploadeType', ext);
+              inited.file_frame[name].uploader.uploader.param('uploadeTypecaller', 'multi_meta_box');
             }
             inited.file_frame[name].open();
             return;
@@ -234,91 +275,93 @@ jQuery(document).ready(function($){
 
           inited.file_frame[name] = wp.media({
             library: {
-                type: mime
+              type: mime
             },
-            title: jQuery( this ).data( 'uploader_title' ),
+            title: jQuery(this).data('uploader_title'),
             button: {
-            text: jQuery( this ).data( 'uploader_button_text' ),
+              text: jQuery(this).data('uploader_button_text'),
             },
-            multiple: multi  // Set to true to allow multiple files to be selected
+            multiple: multi // Set to true to allow multiple files to be selected
           });
 
 
           // When an image is selected, run a callback.
-          inited.file_frame[name].on( 'select', function() {
+          inited.file_frame[name].on('select', function() {
             // We set multiple to false so only get one image from the uploader
             attachment = inited.file_frame[name].state().get('selection').first().toJSON();
             // Do something with attachment.id and/or attachment.url here
             $(inited.file_id).val(attachment.id);
             $(inited.file_url).val(attachment.url);
             inited.replaceFileUploadClass(el);
-            inited.set_preview('file',true);
+            inited.setPreview('file', true);
           });
           // Finally, open the modal
 
           inited.file_frame[name].open();
-          if (ext){
-            inited.file_frame[name].uploader.uploader.param( 'uploadeType', ext);
-            inited.file_frame[name].uploader.uploader.param( 'uploadeTypecaller', 'my_meta_box' );
+          if (ext) {
+            inited.file_frame[name].uploader.uploader.param('uploadeType', ext);
+            inited.file_frame[name].uploader.uploader.param('uploadeTypecaller', 'multi_meta_box');
           }
         },
-        upload_Image:function(el){
+        uploadImage: function(el) {
           var name = $(el).attr('id');
-          var multi = ($(el).hasClass("multiFile")? true: false);
+          var multi = ($(el).hasClass("multiFile") ? true : false);
           // If the media frame already exists, reopen it.
-          if ( typeof inited.image_frame[name] !== "undefined")  {
-                  inited.image_frame[name].open();
-                  return;
+          if (typeof inited.image_frame[name] !== "undefined") {
+            inited.image_frame[name].open();
+            return;
           }
           // Create the media frame.
-          inited.image_frame[name] =  wp.media({
+          inited.image_frame[name] = wp.media({
             library: {
               type: 'image'
             },
-            title: jQuery( this ).data( 'uploader_title' ),
+            title: jQuery(this).data('uploader_title'),
             button: {
-            text: jQuery( this ).data( 'uploader_button_text' ),
+              text: jQuery(this).data('uploader_button_text'),
             },
-            multiple: multi  // Set to true to allow multiple files to be selected
+            multiple: multi // Set to true to allow multiple files to be selected
           });
           // When an image is selected, run a callback.
-          inited.image_frame[name].on( 'select', function() {
+          inited.image_frame[name].on('select', function() {
             // We set multiple to false so only get one image from the uploader
             attachment = inited.image_frame[name].state().get('selection').first().toJSON();
             // Do something with attachment.id and/or attachment.url here
             $(inited.file_id).val(attachment.id);
             $(inited.file_url).val(attachment.url);
             inited.replaceImageUploadClass(el);
-            inited.set_preview('image',true);
+            inited.setPreview('image', true);
           });
           // Finally, open the modal
           inited.image_frame[name].open();
         },
-        replaceImageUploadClass: function(el){
-          if ($(el).hasClass("simplePanelimageUpload")){
+        replaceImageUploadClass: function(el) {
+          if ($(el).hasClass("hideRemove")) {
+            $(el).hide();
+          } else if ($(el).hasClass("simplePanelimageUpload")) {
             $(el).removeClass("simplePanelimageUpload").addClass('simplePanelimageUploadclear').val('Remove Image');
-          }else{
+          } else {
             $(el).removeClass("simplePanelimageUploadclear").addClass('simplePanelimageUpload').val('Upload Image');
           }
         },
-        replaceFileUploadClass: function(el){
-          if ($(el).hasClass("simplePanelfileUpload")){
+        replaceFileUploadClass: function(el) {
+          if ($(el).hasClass("simplePanelfileUpload")) {
             $(el).removeClass("simplePanelfileUpload").addClass('simplePanelfileUploadclear').val('Remove File');
-          }else{
+          } else {
             $(el).removeClass("simplePanelfileUploadclear").addClass('simplePanelfileUpload').val('Upload File');
           }
         },
-        set_preview: function(stype,ShowFlag){
+        setPreview: function(stype, ShowFlag) {
           ShowFlag = ShowFlag || false;
           var fileuri = $(inited.file_url).val();
-          if (stype == 'image'){
+          if (stype == 'image') {
             if (ShowFlag)
-              $(inited.file_id).prev().find('img').attr('src',fileuri).show();
+              $(inited.file_id).prev().find('img').attr('src', fileuri).show();
             else
-              $(inited.file_id).prev().find('img').attr('src','').hide();
-          }else{
+              $(inited.file_id).prev().find('img').attr('src', '').hide();
+          } else {
             if (ShowFlag)
-              $(inited.file_id).prev().find('ul').append('<li><a href="' + fileuri + '" target="_blank">'+fileuri+'</a></li>');
+              $(inited.file_id).prev().find('ul').append('<li><a href="' + fileuri + '" target="_blank">' + fileuri + '</a></li>');
             else
               $(inited.file_id).prev().find('ul').children().remove();
           }
@@ -326,11 +369,11 @@ jQuery(document).ready(function($){
       }
     }
     return {
-      getInstance :function(){
-        if (!inited){
+      getInstance: function() {
+        if (!inited) {
           inited = init();
         }
-        return inited; 
+        return inited;
       }
     }
   })()
