@@ -108,6 +108,26 @@ if ( ! class_exists( 'Multi_Meta_Box' ) ) :
   public $in_group = false;
 
   /**
+   * $googlemap_api
+   * API key for Google Maps, populated from options table if present
+   *
+   * @var string
+   * @access public
+   * @since 3.2.3
+   */
+  public $googlemap_api = false;
+
+  /**
+   * $googlemap_sensor
+   * Enable location sensing for Google Maps, populated from options table if present
+   *
+   * @var boolean
+   * @access public
+   * @since 3.2.3
+   */
+  public $googlemap_use_sensor = false;
+
+  /**
    * Constructor
    *
    * @since 1.0
@@ -140,6 +160,11 @@ if ( ! class_exists( 'Multi_Meta_Box' ) ) :
     } else {
       $this->class_path = plugins_url( 'meta-box-class', plugin_basename( dirname( __FILE__ ) ) );
     }
+
+    // googlemap geocoder, if we have the relevant options set in the WordPress
+    // options table pull them out for use by the geocoder map.
+    $this->googlemap_api = get_option( 'googlemap_api', false );
+    $this->googlemap_use_sensor = get_option( 'googlemap_use_sensor', false );
 
     // Add metaboxes
     add_action( 'add_meta_boxes', array( $this, 'add' ) );
@@ -187,7 +212,7 @@ if ( ! class_exists( 'Multi_Meta_Box' ) ) :
       // Check for special fields and add needed actions for them.
 
       //this replaces the ugly check fields methods calls
-      foreach ( array( 'upload', 'color', 'date', 'time', 'code', 'select', 'slider' ) as $type ) {
+      foreach ( array( 'upload', 'color', 'date', 'time', 'code', 'select', 'slider', 'geocoder' ) as $type ) {
         call_user_func( array( $this, 'check_field_' . $type ) );
       }
     }
@@ -331,6 +356,29 @@ if ( ! class_exists( 'Multi_Meta_Box' ) ) :
       $plugin_path = $this->class_path;
       wp_enqueue_style( 'mmb-jquery-ui-css', $plugin_path .'/js/jquery-ui/jquery-ui.css' );
       wp_enqueue_script( 'jquery-ui-slider' );
+    }
+  }
+
+
+  /**
+   * Check Field Geocoder
+   *
+   * @author Robert Miller
+   * @since 3.2.3
+   * @access public
+   */
+  public function check_field_geocoder() {
+
+    if ( $this->has_field( 'geocoder' ) && $this->is_edit_page() ) {
+      $plugin_path = $this->class_path;
+      $map_args = $this->googlemap_use_sensor ? '?sensor=true' : '?sensor=false';
+      if ($this->googlemap_api && $this->googlemap_api != '')
+        $map_args .= '&key=' . $googlemap_api;
+      $map_args .= '&libraries=places';
+
+      wp_enqueue_script( 'googlemaps', 'http://maps.googleapis.com/maps/api/js' . $map_args );
+      wp_enqueue_script( 'geocomplete', $plugin_path . '/js/jquery.geocomplete.min.js', array('googlemaps','jquery'), '', true);
+      wp_enqueue_script( 'geocoder', $plugin_path . '/js/geocoder.js', array('googlemaps','jquery','geocomplete'), '', true);
     }
   }
 
@@ -709,6 +757,39 @@ if ( ! class_exists( 'Multi_Meta_Box' ) ) :
   public function show_field_checkbox( $field, $meta ) {
     $this->show_field_begin( $field, $meta );
     echo "<input type='checkbox' ".( isset( $field['style'] )? "style='{$field['style']}' " : '' )." class='rw-checkbox".( isset( $field['class'] )? ' ' . $field['class'] : '' )."' name='{$field['id']}' id='{$field['id']}'" . checked( !empty( $meta ), true, false ) . " />";
+    $this->show_field_end( $field, $meta );
+
+  }
+
+
+  /**
+   * Show Geocoder Field.
+   *
+   * @param string  $field
+   * @param string  $meta
+   * @since 1.0
+   * @access public
+   */
+  public function show_field_geocoder( $field, $meta ) {
+    $this->show_field_begin( $field, $meta );
+    $name = esc_attr( $field['id'] );
+    $marker = absint($meta['marker']) < 1 ? absint($meta['marker']) : 0 ;
+    echo "<div id='{$name}' class='mmb-geocoder'>";
+    echo "<div>";
+    echo "<input id='geocomplete' class='mmb-geocoder-completer mmb-text' type='text' placeholder='Type in an address, place or coordinates' type='text' value='' />";
+    echo "<input id='find' class='button-secondary mmb-geocoder-find-button' type='button' value='Locate' />";
+    echo "</div>";
+    echo "<div class='mmb-geocoder-map-canvas' style='width: 100%; height: 300px;'></div>";
+    echo "<fieldset><div>";
+    echo "<label>Latitude</label>";
+    echo "<input class='mmb-geocoder-latitude-input mmb-text' name='{$name}[latitude]' type='text' value='" . $meta['latitude'] . "' data-geo='lat'>";
+    echo "<label>Longitude</label>";
+    echo "<input class='mmb-geocoder-longitude-input mmb-text' name='{$name}[longitude]' type='text' value='" . $meta['longitude'] . "' data-geo='lng'>";
+    echo "</div><div><label>Address</label>";
+    echo "<input class='mmb-geocoder-address-input mmb-text' name='{$name}[address]' type='text' value='" . $meta['address'] . "' data-geo='formatted_address'>";
+    echo "</div></fieldset>";
+    echo "<span class='description'>" . $field['description'] . "</span>";
+    echo "</div>";
     $this->show_field_end( $field, $meta );
 
   }
@@ -1648,6 +1729,36 @@ if ( ! class_exists( 'Multi_Meta_Box' ) ) :
     }
   }
 
+
+  /**
+   *  Add Geocoder Field to meta box
+   *  @author Robert Miller <rob@strawberryjellyfish.com>
+   *  @since 3.2.3
+   *  @access public
+   *  @param $id string field id, i.e. the meta key
+   *  @param $options (array)  array of key => value pairs for select options
+   *  @param $args mixed|array
+   *    'name' => // field name/label string optional
+   *    'desc' => // field description, string optional
+   *  @param $repeater bool  is this a field inside a repeatr? true|false(default)
+   */
+  public function add_geocoder( $id, $args, $repeater = false ) {
+    $new_field = array(
+      'type' => 'geocoder',
+      'id'=> $id,
+      'desc' => '',
+      'style' =>'',
+      'name' => 'Find Location'
+    );
+
+    $new_field = array_merge( $new_field, $args );
+
+    if ( false === $repeater ) {
+      $this->_fields[] = $new_field;
+    } else {
+      return $new_field;
+    }
+  }
 
   /**
    *  Add Select Field to meta box

@@ -297,3 +297,33 @@ th.mmb-label
 {
   margin-right: 15px;
 }
+
+.mmb-geocoder-completer {
+  width: 80%;
+  margin-right: 1.5%;
+}
+.mmb-geocoder-find-button {
+  width: 18%;
+}
+
+.mmb-geocoder label {
+  width: 12%;
+  display: inline-block;
+  margin-right: 1%;
+}
+
+.mmb-geocoder fieldset {
+  margin: 4px 0px;
+}
+
+.mmb-geocoder-latitude-input, .mmb-geocoder-longitude-input {
+  width: 36%;
+}
+
+.mmb-geocoder-latitude-input {
+  margin-right: 1.25%;
+}
+
+.mmb-geocoder-address-input {
+  width: 86.5%;
+}

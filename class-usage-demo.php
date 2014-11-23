@@ -195,4 +195,28 @@ if ( is_admin() ) {
    */
   //Finish Meta Box Declaration
   $my_meta3->finish();
+
+  $config4 = array(
+    'id'             => 'demo_meta_box4',          // meta box id, unique per meta box
+    'title'          => 'Geocoder',          // meta box title
+    'pages'          => array( 'post', 'page' ),      // post types, accept custom post types as well, default is array('post'); optional
+    'context'        => 'normal',            // where the meta box appear: normal (default), advanced, side; optional
+    'priority'       => 'high',            // order of meta box: high (default), low; optional
+    'fields'         => array(),            // list of meta fields (can be added by field arrays)
+    'local_images'   => false,          // Use local or hosted images (meta box images for add/remove)
+    'use_with_theme' => false          //change path if used with theme set to true, false for a plugin or anything else for a custom path(default false).
+  );
+
+
+  /*
+   * Initiate your 3rd meta box
+   */
+  $my_meta4 =  new Multi_Meta_Box( $config4 );
+  //first field of the group has 'group' => 'start' and last field has 'group' => 'end'
+
+  //text field
+  $my_meta4->add_geocoder('place_one', array( 'name' => 'Location', 'description' => 'this is the description' ) );
+  $my_meta4->add_geocoder('place_two', array( 'name' => 'Location 2') );
+
+  $my_meta4->finish();
 }
