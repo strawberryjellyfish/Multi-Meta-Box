@@ -406,7 +406,7 @@ if ( ! class_exists( 'Multi_Meta_Box' ) ) :
     global $post;
 
     wp_nonce_field( basename( __FILE__ ), 'multi_meta_box_nonce' );
-    echo '<table class="widefat">';
+    echo '<table class="form-table">';
     foreach ( $this->_fields as $field ) {
       $field['multiple'] = isset( $field['multiple'] ) ? $field['multiple'] : false;
       $meta = get_post_meta( $post->ID, $field['id'], !$field['multiple'] );
@@ -566,11 +566,11 @@ if ( ! class_exists( 'Multi_Meta_Box' ) ) :
    */
   public function show_field_begin( $field, $meta ) {
     if ( $field['name'] != '' || $field['name'] != FALSE ) {
-      echo "<th class='mmb-label'>";
+      echo "<th scope='row'>";
       echo "<label for='{$field['id']}'>{$field['name']}</label>";
       echo "</th>";
     }
-    echo "<td class='mmb-field'".( ( $this->in_group === true )? " valign='top'": "" ).">";
+    echo "<td ".( ( $this->in_group === true )? " valign='top'": "" ).">";
   }
 
 
@@ -585,7 +585,7 @@ if ( ! class_exists( 'Multi_Meta_Box' ) ) :
   public function show_field_end( $field, $meta=NULL , $group = false ) {
     //print description
     if ( isset( $field['desc'] ) && $field['desc'] != '' )
-      echo "<div class='desc-field'>{$field['desc']}</div>";
+      echo "<p class='description'>{$field['desc']}</p>";
     echo "</td>";
   }
 

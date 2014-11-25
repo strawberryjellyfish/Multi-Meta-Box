@@ -17,21 +17,6 @@
   font-family:"HelveticaNeue-Light","Helvetica Neue Light","Helvetica Neue",Helvetica,Arial,sans-serif
 }
 
-th.mmb-label
-{
-  vertical-align:top;
-  line-height:28px
-}
-
-.mmb-label
-{
-  margin:0 0 5px;
-  padding:5px 0 0;
-  font:20px/31px HelveticaNeue-Light,"Helvetica Neue Light","Helvetica Neue",Helvetica,Arial,sans-serif;
-  text-shadow:rgba(255,255,255,1) 0 1px 0;
-  width:auto
-}
-
 .mmb-radio-label
 {
   padding-right:10px
@@ -75,14 +60,6 @@ th.mmb-label
   padding:5px;
   display:block;
   min-width:200px
-}
-
-.mmb-field .desc-field
-{
-  color:#AAA;
-  font-style:italic;
-  margin:5px 0 0 3px!important;
-  font-size:13px
 }
 
 .mmb-field .wp_themeSkin table.mceLayout
@@ -148,37 +125,6 @@ th.mmb-label
   margin-top:10px
 }
 
-/* Time Picker */
-.ui-timepicker-div
-{
-  font-size:.9em
-}
-
-.ui-timepicker-div .ui-widget-header
-{
-  margin-bottom:8px
-}
-
-.ui-timepicker-div dl
-{
-  text-align:left
-}
-
-.ui-timepicker-div dl dt
-{
-  height:25px
-}
-
-.ui-timepicker-div dl dd
-{
-  margin:-25px 0 10px 65px
-}
-
-.ui-timepicker-div td
-{
-  font-size:90%
-}
-
 /* Repeater Block */
 .mmb-repeater-block
 {
@@ -240,9 +186,10 @@ th.mmb-label
 
 .mmb-repeater-sort-highlight
 {
-  min-height:55px;
-  background-color:#EEE;
-  margin:2px
+  min-height: 55px;
+  background-color: #DDD;
+  margin: 2px;
+  border: dashed 1px #888;
 }
 
 .mmb-repeater-control-clear

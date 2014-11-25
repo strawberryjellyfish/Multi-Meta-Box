@@ -114,7 +114,7 @@ if ( is_admin() ) {
     ) );
 
   /*
-   * To Create a reapeater Block first create an array of fields
+   * To Create a repeater Block first create an array of fields
    * use the same functions as above but add true as a last param
    */
   $repeater_fields[] = $my_meta2->add_text( $prefix.'re_text_field_id', array( 'name'=> 'My Text ' ), true );
@@ -133,8 +133,8 @@ if ( is_admin() ) {
     ) );
 
   /*
-   * To Create a conditinal Block first create an array of fields
-   * use the same functions as above but add true as a last param (like the repater block)
+   * To Create a conditional Block first create an array of fields
+   * use the same functions as above but add true as a last param (like the repeater block)
    */
   $Conditinal_fields[] = $my_meta2->add_text( $prefix.'con_text_field_id', array( 'name'=> 'My Text ' ), true );
   $Conditinal_fields[] = $my_meta2->add_textarea( $prefix.'con_textarea_field_id', array( 'name'=> 'My Textarea ' ), true );
@@ -147,8 +147,8 @@ if ( is_admin() ) {
   //repeater block
   $my_meta2->add_condition( 'conditinal_fields',
     array(
-      'name'   => __( 'Enable conditinal fields? ', 'mmb' ),
-      'desc'   => __( '<small>Turn ON if you want to enable the <strong>conditinal fields</strong>.</small>', 'mmb' ),
+      'name'   => __( 'Enable conditional fields? ', 'mmb' ),
+      'desc'   => __( '<small>Turn ON if you want to enable the <strong>conditional fields</strong>.</small>', 'mmb' ),
       'fields' => $Conditinal_fields,
       'std'    => false
     ) );
