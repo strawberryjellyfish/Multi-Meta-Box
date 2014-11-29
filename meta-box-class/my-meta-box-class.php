@@ -19,7 +19,7 @@
  * All credit to all previous authors for laying down the groundwork and
  * providing inspiration.
  *
- * @version 3.2.3
+ * @version 3.2.4
  * @copyright 2014
  * @author Robert Miller (email: rob@strawberryjellyfish.com)
  * @link http://strawberryjellyfish.com
@@ -62,7 +62,7 @@ if ( ! class_exists( 'Multi_Meta_Box' ) ) :
    * @var array
    * @access protected
    */
-  protected $_prefix;
+  protected $_fields;
 
   /**
    * Holds Prefix for meta box fields.
@@ -70,7 +70,15 @@ if ( ! class_exists( 'Multi_Meta_Box' ) ) :
    * @var array
    * @access protected
    */
-  protected $_fields;
+  protected $_prefix;
+
+  /**
+   * True if dealing with taxonomy meta.
+   *
+   * @var boolean
+   * @access protected
+   */
+  protected $_taxonomy = false;
 
   /**
    * Use local images.
@@ -146,8 +154,9 @@ if ( ! class_exists( 'Multi_Meta_Box' ) ) :
 
     // Assign meta box values to local variables and add it's missed values.
     $this->_meta_box = $meta_box;
+    $this->_taxonomy = ( isset( $meta_box['taxonomy'] ) ) ? true : false;
     $this->_prefix = ( isset( $meta_box['prefix'] ) ) ? $meta_box['prefix'] : '';
-    $this->_fields = $this->_meta_box['fields'];
+    $this->_fields = $meta_box['fields'];
     $this->_local_images = ( isset( $meta_box['local_images'] ) ) ? true : false;
     $this->add_missed_values();
     if ( isset( $meta_box['use_with_theme'] ) )
@@ -166,15 +175,19 @@ if ( ! class_exists( 'Multi_Meta_Box' ) ) :
     $this->googlemap_api = get_option( 'googlemap_api', false );
     $this->googlemap_use_sensor = get_option( 'googlemap_use_sensor', false );
 
-    // Add metaboxes
-    add_action( 'add_meta_boxes', array( $this, 'add' ) );
-    //add_action( 'wp_insert_post', array( $this, 'save' ) );
+    // Add metaboxes for post types
+    add_action( 'add_meta_boxes', array( $this, 'add_post_type_meta' ) );
     add_action( 'save_post', array( $this, 'save' ) );
+
     // Load common js, css files
     // Must enqueue for all pages as we need js for the media upload, too.
     add_action( 'admin_print_styles', array( $this, 'load_scripts_styles' ) );
     //limit File type at upload
     add_filter( 'wp_handle_upload_prefilter', array( $this, 'validate_upload_file_type' ) );
+
+    // Taxonomy Handling
+    add_action( 'admin_init', array( $this, 'add_taxonomy_meta' ) );
+    add_action( 'delete_term', array( $this, 'delete_taxonomy_metadata' ), 10, 2);
 
   }
 
@@ -187,20 +200,17 @@ if ( ! class_exists( 'Multi_Meta_Box' ) ) :
    */
   public function load_scripts_styles() {
 
-    // Get Plugin Path
-    $plugin_path = $this->class_path;
-
-    //only load styles and js when needed
-    /*
-     * since 1.8
-     */
     global $typenow;
-    if ( in_array( $typenow, $this->_meta_box['pages'] ) && $this->is_edit_page() ) {
+    $taxnow = isset($_REQUEST['taxonomy']) ? $_REQUEST['taxonomy'] : '';
+    // load on post-type or taxonomy pages
+    if ( ( $this->_meta_box['scopes'] && in_array($taxnow, $this->_meta_box['scopes']) )
+      || ( in_array( $typenow, $this->_meta_box['scopes'] ) && $this->is_edit_page() ) ) {
+
       // Enqueue Meta Box Style
-      wp_enqueue_style( 'mmb-meta-box', $plugin_path . '/css/meta-box.css' );
+      wp_enqueue_style( 'mmb-meta-box', $this->class_path . '/css/meta-box.css' );
 
       // Enqueue Meta Box Scripts
-      wp_enqueue_script( 'mmb-meta-box', $plugin_path . '/js/meta-box.js', array( 'jquery' ), null, true );
+      wp_enqueue_script( 'mmb-meta-box', $this->class_path . '/js/meta-box.js', array( 'jquery' ), null, true );
 
       // Make upload feature work event when custom post type doesn't support 'editor'
       if ( $this->has_field( 'image' ) || $this->has_field( 'file' ) ) {
@@ -210,13 +220,10 @@ if ( ! class_exists( 'Multi_Meta_Box' ) ) :
         wp_enqueue_script( 'jquery-ui-sortable' );
       }
       // Check for special fields and add needed actions for them.
-
-      //this replaces the ugly check fields methods calls
       foreach ( array( 'upload', 'color', 'date', 'time', 'code', 'select', 'slider', 'geocoder' ) as $type ) {
         call_user_func( array( $this, 'check_field_' . $type ) );
       }
     }
-
   }
 
 
@@ -389,11 +396,64 @@ if ( ! class_exists( 'Multi_Meta_Box' ) ) :
    * @since 1.0
    * @access public
    */
-  public function add( $postType ) {
-    if ( in_array( $postType, $this->_meta_box['pages'] ) ) {
+  public function add_post_type_meta( $postType ) {
+    if ( !$this->_taxonomy && in_array( $postType, $this->_meta_box['scopes'] ) ) {
       add_meta_box( $this->_meta_box['id'], $this->_meta_box['title'], array( $this, 'show' ), $postType, $this->_meta_box['context'], $this->_meta_box['priority'] );
     }
   }
+
+
+  /**
+   * Add Meta Box for multiple post types.
+   *
+   * @since 1.0
+   * @access public
+   */
+  public function add_taxonomy_meta() {
+
+    // Loop through array
+    if ( $this->_taxonomy ) {
+      foreach ( $this->_meta_box['scopes'] as $scope ) {
+        //add fields to edit form
+        add_action($scope.'_edit_form_fields',array( $this, 'show_edit_form' ));
+        //add fields to add new form
+        add_action($scope.'_add_form_fields',array( $this, 'show_new_form' ));
+        // this saves the edit fields
+        add_action( 'edited_'.$scope, array( $this, 'save' ), 10, 2);
+        // this saves the add fields
+        add_action('created_'.$scope,array( $this, 'save' ), 10, 2);
+      }
+      // Delete all attachments when delete custom post type.
+      add_action( 'wp_ajax_at_delete_file',     array( $this, 'delete_file' ) );
+      add_action( 'wp_ajax_at_reorder_images',   array( $this, 'reorder_images' ) );
+      // Delete file via Ajax
+      add_action( 'wp_ajax_at_delete_mupload', array( $this, 'wp_ajax_delete_image' ) );
+    }
+  }
+
+  /**
+   * Callback function to show fields on add new taxonomy term form.
+   *
+   * @since 1.0
+   * @access public
+   */
+  public function show_new_form($term_id){
+    $this->_form_type = 'new';
+    add_action('admin_footer',array($this,'footer_js'));
+    $this->show($term_id);
+  }
+
+  /**
+   * Callback function to show fields on term edit form.
+   *
+   * @since 1.0
+   * @access public
+   */
+  public function show_edit_form($term_id){
+    $this->_form_type = 'edit';
+    $this->show($term_id);
+  }
+
 
   /**
    * Callback function to show fields in meta box.
@@ -401,16 +461,19 @@ if ( ! class_exists( 'Multi_Meta_Box' ) ) :
    * @since 1.0
    * @access public
    */
-  public function show() {
+  public function show($term_id) {
     $this->in_group = false;
     global $post;
 
+    $parent_object_id = $this->_taxonomy ? $term_id : $post->ID;
     wp_nonce_field( basename( __FILE__ ), 'multi_meta_box_nonce' );
     echo '<table class="form-table">';
     foreach ( $this->_fields as $field ) {
       $field['multiple'] = isset( $field['multiple'] ) ? $field['multiple'] : false;
-      $meta = get_post_meta( $post->ID, $field['id'], !$field['multiple'] );
-      $meta = ( $meta !== '' ) ? $meta : @$field['std'];
+      $meta = $this->_taxonomy ?
+        get_tax_meta( $parent_object_id, $field['id'], !$field['multiple'] ) :
+        get_post_meta( $parent_object_id, $field['id'], !$field['multiple'] );
+      $meta = ( $meta !== '' ) ? $meta : $field['std'];
 
       if ( !in_array( $field['type'], array( 'image', 'repeater', 'file' ) ) )
         $meta = is_array( $meta ) ? array_map( 'esc_attr', $meta ) : esc_attr( $meta );
@@ -431,7 +494,7 @@ if ( ! class_exists( 'Multi_Meta_Box' ) ) :
           echo '</tr></table></td></tr>';
           $this->in_group = false;
         }
-      }else {
+      } else {
         echo '</tr>';
       }
     }
@@ -452,13 +515,15 @@ if ( ! class_exists( 'Multi_Meta_Box' ) ) :
     // Get Plugin Path
     $plugin_path = $this->class_path;
     $this->show_field_begin( $field, $meta );
-    $meta = get_post_meta( $post->ID, $field['id'], true );
+    if ( !$this->_taxonomy ) {
+      $meta = get_post_meta( $post->ID, $field['id'], true );
+    }
     $class = $field['sortable'] ? " mmb-repeater-sortable" : '';
+    $count = 0;
 
     echo "<div class='mmb-repeat". $class ."' id='{$field['id']}'>";
 
     if ( count( $meta ) > 0 && is_array( $meta ) ) {
-      $count = 0;
       foreach ( $meta as $me ) {
         //for labelling toggles
         $repeater_preview =  isset( $me[$field['fields'][0]['id']] ) ? $me[$field['fields'][0]['id']] : "";
@@ -1109,32 +1174,51 @@ if ( ! class_exists( 'Multi_Meta_Box' ) ) :
    * @since 1.0
    * @access public
    */
-  public function save( $post_id ) {
+  public function save( $parent_object_id ) {
 
     global $post_type;
 
-    $post_type_object = get_post_type_object( $post_type );
+    if ( $this->_taxonomy ) {
+      // check if the we are coming from quick edit issue #38 props to Nicola Peluchetti.
+      if (isset($_REQUEST['action'])  &&  $_REQUEST['action'] == 'inline-save-tax') {
+        return $parent_object_id;
+      }
+      if ( ! isset( $parent_object_id )                            // Check Revision
+        || ( ! isset( $_POST['taxonomy'] ) )              // Check if current taxonomy type is set.
+        || ( ! in_array( $_POST['taxonomy'], $this->_meta_box['scopes'] ) )              // Check if current taxonomy type is supported.
+        || ( ! check_admin_referer( basename( __FILE__ ), 'multi_meta_box_nonce') )    // Check nonce - Security
+        || ( ! current_user_can('manage_categories') ) )                 // Check permission
+        {
+          return $parent_object_id;
+        }
 
-    if ( ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE )                      // Check Autosave
-      || ( ! isset( $_POST['post_ID'] ) || $post_id != $_POST['post_ID'] )        // Check Revision
-      || ( ! in_array( $post_type, $this->_meta_box['pages'] ) )                  // Check if current post type is supported.
-      || ( ! check_admin_referer( basename( __FILE__ ), 'multi_meta_box_nonce' ) )    // Check nonce - Security
-      || ( ! current_user_can( $post_type_object->cap->edit_post, $post_id ) ) )  // Check permission
-      {
-      return $post_id;
+    } else {
+      $post_type_object = get_post_type_object( $post_type );
+      if ( ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE )                      // Check Autosave
+        || ( ! isset( $_POST['post_ID'] ) || $parent_object_id != $_POST['post_ID'] )        // Check Revision
+        || ( ! in_array( $post_type, $this->_meta_box['scopes'] ) )                  // Check if current post type is supported.
+        || ( ! check_admin_referer( basename( __FILE__ ), 'multi_meta_box_nonce' ) )    // Check nonce - Security
+        || ( ! current_user_can( $post_type_object->cap->edit_post, $parent_object_id ) ) )  // Check permission
+        {
+          return $parent_object_id;
+        }
     }
 
     foreach ( $this->_fields as $field ) {
 
       $name = $field['id'];
       $type = $field['type'];
-      $old = get_post_meta( $post_id, $name, ! $field['multiple'] );
+      if ( $this->_taxonomy ) {
+        $old = get_tax_meta( $parent_object_id, $name, ! $field['multiple'] );
+      } else {
+        $old = get_post_meta( $parent_object_id, $name, ! $field['multiple'] );
+      }
       $new = ( isset( $_POST[$name] ) ) ? $_POST[$name] : ( ( $field['multiple'] ) ? array() : '' );
 
 
       // Validate meta value
-      if ( class_exists( 'at_Meta_Box_Validate' ) && method_exists( 'at_Meta_Box_Validate', $field['validate_func'] ) ) {
-        $new = call_user_func( array( 'at_Meta_Box_Validate', $field['validate_func'] ), $new );
+      if ( class_exists( 'Multi_Meta_Box_Validate' ) && method_exists( 'Multi_Meta_Box_Validate', $field['validate_func'] ) ) {
+        $new = call_user_func( array( 'Multi_Meta_Box_Validate', $field['validate_func'] ), $new );
       }
 
       //skip on Paragraph field
@@ -1143,9 +1227,9 @@ if ( ! class_exists( 'Multi_Meta_Box' ) ) :
         // Call defined method to save meta value, if there's no methods, call common one.
         $save_func = 'save_field_' . $type;
         if ( method_exists( $this, $save_func ) ) {
-          call_user_func( array( $this, 'save_field_' . $type ), $post_id, $field, $old, $new );
+          call_user_func( array( $this, 'save_field_' . $type ), $parent_object_id, $field, $old, $new );
         } else {
-          $this->save_field( $post_id, $field, $old, $new );
+          $this->save_field( $parent_object_id, $field, $old, $new );
         }
       }
 
@@ -1155,24 +1239,36 @@ if ( ! class_exists( 'Multi_Meta_Box' ) ) :
   /**
    * Common function for saving fields.
    *
-   * @param string  $post_id
+   * @param string  $id
    * @param string  $field
    * @param string  $old
    * @param string|mixed $new
    * @since 1.0
    * @access public
    */
-  public function save_field( $post_id, $field, $old, $new ) {
+  public function save_field( $parent_object_id, $field, $old, $new ) {
     $name = $field['id'];
-    delete_post_meta( $post_id, $name );
+    if ( $this->_taxonomy ) {
+      delete_tax_meta( $parent_object_id, $name );
+    } else {
+      delete_post_meta( $parent_object_id, $name );
+    }
     if ( $new === '' || $new === array() )
       return;
     if ( $field['multiple'] ) {
       foreach ( $new as $add_new ) {
-        add_post_meta( $post_id, $name, $add_new, false );
+        if ( $this->_taxonomy ) {
+          update_tax_meta( $parent_object_id, $name, $new );
+        } else {
+          add_post_meta( $parent_object_id, $name, $add_new, false );
+        }
       }
     } else {
-      update_post_meta( $post_id, $name, $new );
+      if ( $this->_taxonomy ) {
+        update_tax_meta( $parent_object_id, $name, $new );
+      } else {
+        update_post_meta( $parent_object_id, $name, $new );
+      }
     }
   }
 
@@ -1186,13 +1282,20 @@ if ( ! class_exists( 'Multi_Meta_Box' ) ) :
    * @since 1.7
    * @access public
    */
-  public function save_field_image( $post_id, $field, $old, $new ) {
+  public function save_field_image( $parent_object_id, $field, $old, $new ) {
     $name = $field['id'];
-    delete_post_meta( $post_id, $name );
+    if ( $this->_taxonomy ) {
+      delete_tax_meta( $parent_object_id, $name );
+    } else {
+      delete_post_meta( $parent_object_id, $name );
+    }
     if ( $new === '' || $new === array() || $new['id'] == '' || $new['url'] == '' )
       return;
-
-    update_post_meta( $post_id, $name, $new );
+    if ( $this->_taxonomy ) {
+      update_tax_meta( $parent_object_id, $name, $new );
+    } else {
+      update_post_meta( $parent_object_id, $name, $new );
+    }
   }
 
 
@@ -1206,10 +1309,10 @@ if ( ! class_exists( 'Multi_Meta_Box' ) ) :
    * @since 1.0
    * @access public
    */
-  public function save_field_wysiwyg( $post_id, $field, $old, $new ) {
+  public function save_field_wysiwyg( $parent_object_id, $field, $old, $new ) {
     $id = str_replace( "_", "", $this->strip_numeric( strtolower( $field['id'] ) ) );
-    $new = ( isset( $_POST[$id] ) ) ? $_POST[$id] : ( ( $field['multiple'] ) ? array() : '' );
-    $this->save_field( $post_id, $field, $old, $new );
+    $new = ( isset( $_POST[$parent_object_id] ) ) ? $_POST[$parent_object_id] : ( ( $field['multiple'] ) ? array() : '' );
+    $this->save_field( $parent_object_id, $field, $old, $new );
   }
 
 
@@ -1223,7 +1326,7 @@ if ( ! class_exists( 'Multi_Meta_Box' ) ) :
    * @since 1.0
    * @access public
    */
-  public function save_field_repeater( $post_id, $field, $old, $new ) {
+  public function save_field_repeater( $parent_object_id, $field, $old, $new ) {
     if ( is_array( $new ) && count( $new ) > 0 ) {
       foreach ( $new as $n ) {
         foreach ( $field['fields'] as $f ) {
@@ -1240,14 +1343,26 @@ if ( ! class_exists( 'Multi_Meta_Box' ) ) :
           $temp[] = $n;
       }
       if ( isset( $temp ) && count( $temp ) > 0 && !$this->is_array_empty( $temp ) ) {
-        update_post_meta( $post_id, $field['id'], $temp );
-      }else {
+        if ( $this->_taxonomy ) {
+          update_tax_meta($parent_object_id, $field['id'], $temp);
+        } else {
+          update_post_meta( $parent_object_id, $field['id'], $temp );
+        }
+      } else {
         //  remove old meta if exists
-        delete_post_meta( $post_id, $field['id'] );
+        if ( $this->_taxonomy ) {
+          delete_tax_meta($parent_object_id, $field['id']);
+        } else {
+          delete_post_meta( $parent_object_id, $field['id'] );
+        }
       }
-    }else {
+    } else {
       //  remove old meta if exists
-      delete_post_meta( $post_id, $field['id'] );
+      if ( $this->_taxonomy ) {
+        delete_tax_meta($parent_object_id, $field['id']);
+      } else {
+        delete_post_meta( $parent_object_id, $field['id'] );
+      }
     }
   }
 
@@ -1262,14 +1377,14 @@ if ( ! class_exists( 'Multi_Meta_Box' ) ) :
    * @since 1.0
    * @access public
    */
-  public function save_field_file( $post_id, $field, $old, $new ) {
+  public function save_field_file( $parent_object_id, $field, $old, $new ) {
 
     $name = $field['id'];
-    delete_post_meta( $post_id, $name );
+    delete_post_meta( $parent_object_id, $name );
     if ( $new === '' || $new === array() || $new['id'] == '' || $new['url'] == '' )
       return;
 
-    update_post_meta( $post_id, $name, $new );
+    update_post_meta( $parent_object_id, $name, $new );
   }
 
   /**
@@ -1283,7 +1398,7 @@ if ( ! class_exists( 'Multi_Meta_Box' ) ) :
    * @access public
    * @deprecated 3.0.7
    */
-  public function save_field_file_repeater( $post_id, $field, $old, $new ) {}
+  public function save_field_file_repeater( $parent_object_id, $field, $old, $new ) {}
 
   /**
    * Add missed values for meta box.
@@ -1294,7 +1409,7 @@ if ( ! class_exists( 'Multi_Meta_Box' ) ) :
   public function add_missed_values() {
 
     // Default values for meta box
-    $this->_meta_box = array_merge( array( 'context' => 'normal', 'priority' => 'high', 'pages' => array( 'post' ) ), (array)$this->_meta_box );
+    $this->_meta_box = array_merge( array( 'context' => 'normal', 'priority' => 'high', 'scopes' => array( 'post' ) ), (array)$this->_meta_box );
 
     // Default values for fields
     foreach ( $this->_fields as &$field ) {
@@ -1318,7 +1433,7 @@ if ( ! class_exists( 'Multi_Meta_Box' ) ) :
    * @access public
    */
   public function has_field( $type ) {
-    //faster search in single dimention array.
+    //faster search in single dimension array.
     if ( count( $this->field_types ) > 0 ) {
       return in_array( $type, $this->field_types );
     }
@@ -1349,7 +1464,7 @@ if ( ! class_exists( 'Multi_Meta_Box' ) ) :
    */
   public function is_edit_page() {
     global $pagenow;
-    return in_array( $pagenow, array( 'post.php', 'post-new.php' ) );
+    return in_array( $pagenow, array( 'post.php', 'post-new.php', 'edit-tags.php' ) );
   }
 
 
@@ -1415,7 +1530,8 @@ if ( ! class_exists( 'Multi_Meta_Box' ) ) :
       'id'=> $id,
       'std' => '',
       'desc' => '',
-      'style' =>''
+      'style' =>'',
+      'multiple' => false
     );
     $new_field = array_merge( $new_field, $args );
     $this->_fields[] = $new_field;
@@ -2321,6 +2437,54 @@ if ( ! class_exists( 'Multi_Meta_Box' ) ) :
   }
 
   /**
+   * footer_js
+   * TODO: FIX ME
+   * should probably abstract this JavaScript and enqueue it anyway
+   *  fix issue #2
+   *  @author Ohad Raz
+   *  @since 1.7.4
+   *  @access public
+   *  @return Void
+   */
+  public function footer_js(){
+    ?>
+    <SCRIPT TYPE="text/javascript">
+    //fix issue #2
+    var numberOfRows = 0;
+    jQuery(document).ready(function(){
+      numberOfRows = jQuery("#the-list>tr").length;
+      jQuery("#the-list").bind("DOMSubtreeModified", function() {
+          if(jQuery("#the-list>tr").length !== numberOfRows){
+              //update new count
+              numberOfRows = jQuery("#the-list>tr").length;
+              //clear form
+              clear_form_meta();
+          }
+      });
+      function clear_form_meta(){
+          //remove image
+          jQuery(".mupload_img_holder").find("img").remove();
+          jQuery(".mupload_img_holder").next().next().next().removeClass('at-delete_image_button').addClass('at-upload_image_button');
+          jQuery(".mupload_img_holder").next().next().next().val("Upload Image");
+          jQuery(".mupload_img_holder").next().next().val('');
+          jQuery(".mupload_img_holder").next().val('');
+
+          //clear selections
+          jQuery("#addtag select option").removeProp('selected');
+          //clear checkbox
+          jQuery("#addtag input:checkbox").removeAttr('checked');
+          //clear radio buttons
+          jQuery("#addtag input:radio").prop('checked', false);
+          //remove repeater blocks
+          jQuery(".mmb-repater-block").remove();
+
+      }
+    });
+    </SCRIPT>
+    <?php
+  }
+
+  /**
    * load_textdomain
    *
    * @author Ohad Raz
@@ -2330,6 +2494,66 @@ if ( ! class_exists( 'Multi_Meta_Box' ) ) :
   public function load_textdomain() {
     load_textdomain( 'mmb', dirname( __FILE__ ) . '/lang/' . get_locale() .'.mo' );
   }
+
 } // End Class
 
 endif; // End Check Class Exists
+
+
+/*
+ * meta functions for easy access:
+ */
+//get term meta field
+if (!function_exists('get_tax_meta')){
+  function get_tax_meta($term_id,$key,$multi = false){
+    $t_id = (is_object($term_id))? $term_id->term_id: $term_id;
+    $m = get_option( 'tax_meta_'.$t_id);
+    if (isset($m[$key])){
+      return $m[$key];
+    }else{
+      return '';
+    }
+  }
+}
+
+//delete meta
+if (!function_exists('delete_tax_meta')){
+  function delete_tax_meta($term_id,$key){
+    $m = get_option( 'tax_meta_'.$term_id);
+    if (isset($m[$key])){
+      unset($m[$key]);
+    }
+    update_option('tax_meta_'.$term_id,$m);
+  }
+}
+
+//update meta
+if (!function_exists('update_tax_meta')){
+  function update_tax_meta($term_id,$key,$value){
+    echo "Update Tax Meta Value: " . $value;
+    $m = get_option( 'tax_meta_'.$term_id);
+    echo "Update Tax Meta: " . $m;
+    $m[$key] = $value;
+    update_option('tax_meta_'.$term_id,$m);
+  }
+}
+
+//get term meta field and strip slashes
+if (!function_exists('get_tax_meta_strip')){
+  function get_tax_meta_strip($term_id,$key,$multi = false){
+    $t_id = (is_object($term_id))? $term_id->term_id: $term_id;
+    $m = get_option( 'tax_meta_'.$t_id);
+    if (isset($m[$key])){
+      return is_array($m[$key])? $m[$key] : stripslashes($m[$key]);
+    }else{
+      return '';
+    }
+  }
+}
+//get all meta fields of a term
+if (!function_exists('get_tax_meta_all')){
+  function get_tax_meta_all( $term_id){
+    $t_id = (is_object($term_id))? $term_id->term_id: $term_id;
+    return get_option( 'tax_meta_'.$t_id,array());
+  }
+}

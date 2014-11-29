@@ -23,13 +23,14 @@ if ( is_admin() ) {
    */
   $config = array(
     'id'             => 'demo_meta_box',          // meta box id, unique per meta box
-    'title'          => 'Simple Meta Box fields',          // meta box title
-    'pages'          => array( 'post', 'page' ),      // post types, accept custom post types as well, default is array('post'); optional
-    'context'        => 'normal',            // where the meta box appear: normal (default), advanced, side; optional
-    'priority'       => 'high',            // order of meta box: high (default), low; optional
-    'fields'         => array(),            // list of meta fields (can be added by field arrays)
-    'local_images'   => false,          // Use local or hosted images (meta box images for add/remove)
-    'use_with_theme' => false          //change path if used with theme set to true, false for a plugin or anything else for a custom path(default false).
+    'title'          => 'Simple Meta Box fields', // meta box title
+    'scopes'         => array( 'category' ),      // taxonomy types
+    'taxonomy'       => true,                     // this should apply to a taxonomy not post type
+    'context'        => '',                       // Not used for taxonomy
+    'priority'       => '',                       // Not used for taxonomy
+    'fields'         => array(),                  // list of meta fields (can be added by field arrays)
+    'local_images'   => false,                    // Use local or hosted images (meta box images for add/remove)
+    'use_with_theme' => false                     //change path if used with theme set to true, false for a plugin or anything else for a custom path(default false).
   );
 
 
@@ -43,7 +44,7 @@ if ( is_admin() ) {
    */
 
   //text field
-  $my_meta->add_text( $prefix.'text_field_id', array( 'name'=> 'My Text ' ) );
+  $my_meta->add_text( $prefix.'text_field_id', array( 'name'=> 'Some Text ', 'std'=> 'blah' ) );
   //textarea field
   $my_meta->add_textarea( $prefix.'textarea_field_id', array( 'name'=> 'My Textarea ' ) );
   //checkbox field
@@ -71,14 +72,15 @@ if ( is_admin() ) {
    * configure your meta box
    */
   $config2 = array(
-    'id'             => 'demo_meta_box2',          // meta box id, unique per meta box
-    'title'          => 'Advanced Meta Box fields',          // meta box title
-    'pages'          => array( 'post', 'page' ),      // post types, accept custom post types as well, default is array('post'); optional
-    'context'        => 'normal',            // where the meta box appear: normal (default), advanced, side; optional
-    'priority'       => 'high',            // order of meta box: high (default), low; optional
-    'fields'         => array(),            // list of meta fields (can be added by field arrays)
-    'local_images'   => false,          // Use local or hosted images (meta box images for add/remove)
-    'use_with_theme' => false          //change path if used with theme set to true, false for a plugin or anything else for a custom path(default false).
+    'id'             => 'demo_meta_box2',           // meta box id, unique per meta box
+    'title'          => 'Advanced Meta Box fields', // meta box title
+    'scopes'         => array( 'post' ),            // post types, accept custom post types as well, default is array('post'); optional
+    'taxonomy'       => false,                      // where the meta box appear: normal (default), advanced, side; optional
+    'context'        => 'normal',                   // where the meta box appear: normal (default), advanced, side; optional
+    'priority'       => 'high',                     // order of meta box: high (default), low; optional
+    'fields'         => array(),                    // list of meta fields (can be added by field arrays)
+    'local_images'   => false,                      // Use local or hosted images (meta box images for add/remove)
+    'use_with_theme' => false                       // change path if used with theme set to true, false for a plugin or anything else for a custom path(default false).
   );
 
 
@@ -95,7 +97,7 @@ if ( is_admin() ) {
   //slider field
   $my_meta2->add_slider( $prefix.'slider_field_id', array( 'name'=> 'Slider ', 'min'=>0, 'max'=> 100, 'std' => 50 ) );
   //date field
-  $my_meta2->add_date( $prefix.'date_field_id', array( 'name'=> 'My Date ' ) );
+  $my_meta2->add_date( $prefix.'date_field_id', array( 'name'=> 'My Date ', 'desc' => 'You can have some helpful text here' ) );
   //Time field
   $my_meta2->add_time( $prefix.'time_field_id', array( 'name'=> 'My Time ' ) );
   //Color field
@@ -157,19 +159,20 @@ if ( is_admin() ) {
    * Don't Forget to Close up the meta box Declaration
    */
   //Finish Meta Box Declaration
+
   $my_meta2->finish();
 
 
   $prefix = "_groupped_";
   $config3 = array(
-    'id'             => 'demo_meta_box3',          // meta box id, unique per meta box
-    'title'          => 'Groupped Meta Box fields',          // meta box title
-    'pages'          => array( 'post', 'page' ),      // post types, accept custom post types as well, default is array('post'); optional
-    'context'        => 'normal',            // where the meta box appear: normal (default), advanced, side; optional
-    'priority'       => 'low',            // order of meta box: high (default), low; optional
-    'fields'         => array(),            // list of meta fields (can be added by field arrays)
-    'local_images'   => false,          // Use local or hosted images (meta box images for add/remove)
-    'use_with_theme' => false          //change path if used with theme set to true, false for a plugin or anything else for a custom path(default false).
+    'id'             => 'demo_meta_box3',           // meta box id, unique per meta box
+    'title'          => 'Groupped Meta Box fields', // meta box title
+    'scopes'         => array( 'post', 'page' ),    // post types, accept custom post types as well, default is array('post'); optional
+    'context'        => 'normal',                   // where the meta box appear: normal (default), advanced, side; optional
+    'priority'       => 'low',                      // order of meta box: high (default), low; optional
+    'fields'         => array(),                    // list of meta fields (can be added by field arrays)
+    'local_images'   => false,                      // Use local or hosted images (meta box images for add/remove)
+    'use_with_theme' => false                       // change path if used with theme set to true, false for a plugin or anything else for a custom path(default false).
   );
 
 
@@ -197,24 +200,21 @@ if ( is_admin() ) {
   $my_meta3->finish();
 
   $config4 = array(
-    'id'             => 'demo_meta_box4',          // meta box id, unique per meta box
-    'title'          => 'Geocoder',          // meta box title
-    'pages'          => array( 'post', 'page' ),      // post types, accept custom post types as well, default is array('post'); optional
-    'context'        => 'normal',            // where the meta box appear: normal (default), advanced, side; optional
-    'priority'       => 'high',            // order of meta box: high (default), low; optional
-    'fields'         => array(),            // list of meta fields (can be added by field arrays)
-    'local_images'   => false,          // Use local or hosted images (meta box images for add/remove)
-    'use_with_theme' => false          //change path if used with theme set to true, false for a plugin or anything else for a custom path(default false).
+    'id'             => 'demo_meta_box4',         // meta box id, unique per meta box
+    'title'          => 'Geocoder',               // meta box title
+    'scopes'         => array( 'post', 'page' ),  // post types, accept custom post types as well, default is array('post'); optional
+    'context'        => 'normal',                 // where the meta box appear: normal (default), advanced, side; optional
+    'priority'       => 'high',                   // order of meta box: high (default), low; optional
+    'fields'         => array(),                  // list of meta fields (can be added by field arrays)
+    'local_images'   => false,                    // Use local or hosted images (meta box images for add/remove)
+    'use_with_theme' => false                     //change path if used with theme set to true, false for a plugin or anything else for a custom path(default false).
   );
 
 
   /*
-   * Initiate your 3rd meta box
+   * Initiate your 4th meta box
    */
   $my_meta4 =  new Multi_Meta_Box( $config4 );
-  //first field of the group has 'group' => 'start' and last field has 'group' => 'end'
-
-  //text field
   $my_meta4->add_geocoder('place_one', array( 'name' => 'Location', 'description' => 'this is the description' ) );
   $my_meta4->add_geocoder('place_two', array( 'name' => 'Location 2') );
 
