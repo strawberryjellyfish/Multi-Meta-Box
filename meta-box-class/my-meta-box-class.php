@@ -178,6 +178,7 @@ if ( ! class_exists( 'Multi_Meta_Box' ) ) :
     // Add metaboxes for post types
     add_action( 'add_meta_boxes', array( $this, 'add_post_type_meta' ) );
     add_action( 'save_post', array( $this, 'save' ) );
+    add_action( 'edit_attachment', array ( $this, 'save' ) );
 
     // Load common js, css files
     // Must enqueue for all pages as we need js for the media upload, too.
