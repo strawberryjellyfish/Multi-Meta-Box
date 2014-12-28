@@ -470,6 +470,7 @@ if ( ! class_exists( 'Multi_Meta_Box' ) ) :
     wp_nonce_field( basename( __FILE__ ), 'multi_meta_box_nonce' );
     echo '<table class="form-table">';
     foreach ( $this->_fields as $field ) {
+      $field['id'] = $this->_prefix . $field['id'];
       $field['multiple'] = isset( $field['multiple'] ) ? $field['multiple'] : false;
       $meta = $this->_taxonomy ?
         get_tax_meta( $parent_object_id, $field['id'], !$field['multiple'] ) :
@@ -1207,7 +1208,7 @@ if ( ! class_exists( 'Multi_Meta_Box' ) ) :
 
     foreach ( $this->_fields as $field ) {
 
-      $name = $field['id'];
+      $name = $this->_prefix . $field['id'];
       $type = $field['type'];
       if ( $this->_taxonomy ) {
         $old = get_tax_meta( $parent_object_id, $name, ! $field['multiple'] );
