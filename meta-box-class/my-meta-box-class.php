@@ -188,7 +188,7 @@ if ( ! class_exists( 'Multi_Meta_Box' ) ) :
 
     // Taxonomy Handling
     add_action( 'admin_init', array( $this, 'add_taxonomy_meta' ) );
-    add_action( 'delete_term', array( $this, 'delete_taxonomy_metadata' ), 10, 2);
+    add_action( 'delete_term', array( $this, 'delete_taxonomy_metadata' ), 10, 2 );
 
   }
 
@@ -202,9 +202,9 @@ if ( ! class_exists( 'Multi_Meta_Box' ) ) :
   public function load_scripts_styles() {
 
     global $typenow;
-    $taxnow = isset($_REQUEST['taxonomy']) ? $_REQUEST['taxonomy'] : '';
+    $taxnow = isset( $_REQUEST['taxonomy'] ) ? $_REQUEST['taxonomy'] : '';
     // load on post-type or taxonomy pages
-    if ( ( $this->_meta_box['scopes'] && in_array($taxnow, $this->_meta_box['scopes']) )
+    if ( ( $this->_meta_box['scopes'] && in_array( $taxnow, $this->_meta_box['scopes'] ) )
       || ( in_array( $typenow, $this->_meta_box['scopes'] ) && $this->is_edit_page() ) ) {
 
       // Enqueue Meta Box Style
@@ -380,13 +380,13 @@ if ( ! class_exists( 'Multi_Meta_Box' ) ) :
     if ( $this->has_field( 'geocoder' ) && $this->is_edit_page() ) {
       $plugin_path = $this->class_path;
       $map_args = $this->googlemap_use_sensor ? '?sensor=true' : '?sensor=false';
-      if ($this->googlemap_api && $this->googlemap_api != '')
+      if ( $this->googlemap_api && $this->googlemap_api != '' )
         $map_args .= '&key=' . $googlemap_api;
       $map_args .= '&libraries=places';
 
       wp_enqueue_script( 'googlemaps', 'http://maps.googleapis.com/maps/api/js' . $map_args );
-      wp_enqueue_script( 'geocomplete', $plugin_path . '/js/jquery.geocomplete.min.js', array('googlemaps','jquery'), '', true);
-      wp_enqueue_script( 'geocoder', $plugin_path . '/js/geocoder.js', array('googlemaps','jquery','geocomplete'), '', true);
+      wp_enqueue_script( 'geocomplete', $plugin_path . '/js/jquery.geocomplete.min.js', array( 'googlemaps', 'jquery' ), '', true );
+      wp_enqueue_script( 'geocoder', $plugin_path . '/js/geocoder.js', array( 'googlemaps', 'jquery', 'geocomplete' ), '', true );
     }
   }
 
@@ -416,13 +416,13 @@ if ( ! class_exists( 'Multi_Meta_Box' ) ) :
     if ( $this->_taxonomy ) {
       foreach ( $this->_meta_box['scopes'] as $scope ) {
         //add fields to edit form
-        add_action($scope.'_edit_form_fields',array( $this, 'show_edit_form' ));
+        add_action( $scope.'_edit_form_fields', array( $this, 'show_edit_form' ) );
         //add fields to add new form
-        add_action($scope.'_add_form_fields',array( $this, 'show_new_form' ));
+        add_action( $scope.'_add_form_fields', array( $this, 'show_new_form' ) );
         // this saves the edit fields
-        add_action( 'edited_'.$scope, array( $this, 'save' ), 10, 2);
+        add_action( 'edited_'.$scope, array( $this, 'save' ), 10, 2 );
         // this saves the add fields
-        add_action('created_'.$scope,array( $this, 'save' ), 10, 2);
+        add_action( 'created_'.$scope, array( $this, 'save' ), 10, 2 );
       }
       // Delete all attachments when delete custom post type.
       add_action( 'wp_ajax_at_delete_file',     array( $this, 'delete_file' ) );
@@ -438,10 +438,10 @@ if ( ! class_exists( 'Multi_Meta_Box' ) ) :
    * @since 1.0
    * @access public
    */
-  public function show_new_form($term_id){
+  public function show_new_form( $term_id ) {
     $this->_form_type = 'new';
-    add_action('admin_footer',array($this,'footer_js'));
-    $this->show($term_id);
+    add_action( 'admin_footer', array( $this, 'footer_js' ) );
+    $this->show( $term_id );
   }
 
   /**
@@ -450,9 +450,9 @@ if ( ! class_exists( 'Multi_Meta_Box' ) ) :
    * @since 1.0
    * @access public
    */
-  public function show_edit_form($term_id){
+  public function show_edit_form( $term_id ) {
     $this->_form_type = 'edit';
-    $this->show($term_id);
+    $this->show( $term_id );
   }
 
 
@@ -462,7 +462,7 @@ if ( ! class_exists( 'Multi_Meta_Box' ) ) :
    * @since 1.0
    * @access public
    */
-  public function show($term_id) {
+  public function show( $term_id ) {
     $this->in_group = false;
     global $post;
 
@@ -840,7 +840,7 @@ if ( ! class_exists( 'Multi_Meta_Box' ) ) :
   public function show_field_geocoder( $field, $meta ) {
     $this->show_field_begin( $field, $meta );
     $name = esc_attr( $field['id'] );
-    $marker = absint($meta['marker']) < 1 ? absint($meta['marker']) : 0 ;
+    $marker = absint( $meta['marker'] ) < 1 ? absint( $meta['marker'] ) : 0 ;
     echo "<div id='{$name}' class='mmb-geocoder'>";
     echo "<div>";
     echo "<input id='geocomplete' class='mmb-geocoder-completer mmb-text' type='text' placeholder='Type in an address, place or coordinates' type='text' value='' />";
@@ -950,8 +950,8 @@ if ( ! class_exists( 'Multi_Meta_Box' ) ) :
     $hide_remove  = isset( $field['hide_remove'] ) ? $field['hide_remove'] : false;
     $remove_class  = $hide_remove ? 'hideRemove' : '';
 
-    if ( ! is_array( $size ))
-      $size = $this->get_width_height($size);
+    if ( ! is_array( $size ) )
+      $size = $this->get_width_height( $size );
 
     $width = $size[0];
     $height = $size[1];
@@ -1182,17 +1182,17 @@ if ( ! class_exists( 'Multi_Meta_Box' ) ) :
 
     if ( $this->_taxonomy ) {
       // check if the we are coming from quick edit issue #38 props to Nicola Peluchetti.
-      if (isset($_REQUEST['action'])  &&  $_REQUEST['action'] == 'inline-save-tax') {
+      if ( isset( $_REQUEST['action'] )  &&  $_REQUEST['action'] == 'inline-save-tax' ) {
         return $parent_object_id;
       }
       if ( ! isset( $parent_object_id )                            // Check Revision
         || ( ! isset( $_POST['taxonomy'] ) )              // Check if current taxonomy type is set.
         || ( ! in_array( $_POST['taxonomy'], $this->_meta_box['scopes'] ) )              // Check if current taxonomy type is supported.
-        || ( ! check_admin_referer( basename( __FILE__ ), 'multi_meta_box_nonce') )    // Check nonce - Security
-        || ( ! current_user_can('manage_categories') ) )                 // Check permission
+        || ( ! check_admin_referer( basename( __FILE__ ), 'multi_meta_box_nonce' ) )    // Check nonce - Security
+        || ( ! current_user_can( 'manage_categories' ) ) )                 // Check permission
         {
-          return $parent_object_id;
-        }
+        return $parent_object_id;
+      }
 
     } else {
       $post_type_object = get_post_type_object( $post_type );
@@ -1202,8 +1202,8 @@ if ( ! class_exists( 'Multi_Meta_Box' ) ) :
         || ( ! check_admin_referer( basename( __FILE__ ), 'multi_meta_box_nonce' ) )    // Check nonce - Security
         || ( ! current_user_can( $post_type_object->cap->edit_post, $parent_object_id ) ) )  // Check permission
         {
-          return $parent_object_id;
-        }
+        return $parent_object_id;
+      }
     }
 
     foreach ( $this->_fields as $field ) {
@@ -1249,7 +1249,7 @@ if ( ! class_exists( 'Multi_Meta_Box' ) ) :
    * @access public
    */
   public function save_field( $parent_object_id, $field, $old, $new ) {
-    $name = $field['id'];
+    $name = $this->_prefix . $field['id'];
     if ( $this->_taxonomy ) {
       delete_tax_meta( $parent_object_id, $name );
     } else {
@@ -1346,14 +1346,14 @@ if ( ! class_exists( 'Multi_Meta_Box' ) ) :
       }
       if ( isset( $temp ) && count( $temp ) > 0 && !$this->is_array_empty( $temp ) ) {
         if ( $this->_taxonomy ) {
-          update_tax_meta($parent_object_id, $field['id'], $temp);
+          update_tax_meta( $parent_object_id, $field['id'], $temp );
         } else {
           update_post_meta( $parent_object_id, $field['id'], $temp );
         }
       } else {
         //  remove old meta if exists
         if ( $this->_taxonomy ) {
-          delete_tax_meta($parent_object_id, $field['id']);
+          delete_tax_meta( $parent_object_id, $field['id'] );
         } else {
           delete_post_meta( $parent_object_id, $field['id'] );
         }
@@ -1361,7 +1361,7 @@ if ( ! class_exists( 'Multi_Meta_Box' ) ) :
     } else {
       //  remove old meta if exists
       if ( $this->_taxonomy ) {
-        delete_tax_meta($parent_object_id, $field['id']);
+        delete_tax_meta( $parent_object_id, $field['id'] );
       } else {
         delete_post_meta( $parent_object_id, $field['id'] );
       }
@@ -2435,7 +2435,7 @@ if ( ! class_exists( 'Multi_Meta_Box' ) ) :
         'crop' =>  $_wp_additional_image_sizes[ $size ]['crop']
       );
     }
-    return array($sizes['width'], $sizes['height']);
+    return array( $sizes['width'], $sizes['height'] );
   }
 
   /**
@@ -2448,8 +2448,8 @@ if ( ! class_exists( 'Multi_Meta_Box' ) ) :
    *  @access public
    *  @return Void
    */
-  public function footer_js(){
-    ?>
+  public function footer_js() {
+?>
     <SCRIPT TYPE="text/javascript">
     //fix issue #2
     var numberOfRows = 0;
@@ -2506,56 +2506,54 @@ endif; // End Check Class Exists
  * meta functions for easy access:
  */
 //get term meta field
-if (!function_exists('get_tax_meta')){
-  function get_tax_meta($term_id,$key,$multi = false){
-    $t_id = (is_object($term_id))? $term_id->term_id: $term_id;
-    $m = get_option( 'tax_meta_'.$t_id);
-    if (isset($m[$key])){
+if ( !function_exists( 'get_tax_meta' ) ) {
+  function get_tax_meta( $term_id, $key, $multi = false ) {
+    $t_id = ( is_object( $term_id ) )? $term_id->term_id: $term_id;
+    $m = get_option( 'tax_meta_'.$t_id );
+    if ( isset( $m[$key] ) ) {
       return $m[$key];
-    }else{
+    } else {
       return '';
     }
   }
 }
 
 //delete meta
-if (!function_exists('delete_tax_meta')){
-  function delete_tax_meta($term_id,$key){
-    $m = get_option( 'tax_meta_'.$term_id);
-    if (isset($m[$key])){
-      unset($m[$key]);
+if ( !function_exists( 'delete_tax_meta' ) ) {
+  function delete_tax_meta( $term_id, $key ) {
+    $m = get_option( 'tax_meta_'.$term_id );
+    if ( isset( $m[$key] ) ) {
+      unset( $m[$key] );
     }
-    update_option('tax_meta_'.$term_id,$m);
+    update_option( 'tax_meta_'.$term_id, $m );
   }
 }
 
 //update meta
-if (!function_exists('update_tax_meta')){
-  function update_tax_meta($term_id,$key,$value){
-    echo "Update Tax Meta Value: " . $value;
-    $m = get_option( 'tax_meta_'.$term_id);
-    echo "Update Tax Meta: " . $m;
+if ( !function_exists( 'update_tax_meta' ) ) {
+  function update_tax_meta( $term_id, $key, $value ) {
+    $m = get_option( 'tax_meta_'.$term_id );
     $m[$key] = $value;
-    update_option('tax_meta_'.$term_id,$m);
+    update_option( 'tax_meta_'.$term_id, $m );
   }
 }
 
 //get term meta field and strip slashes
-if (!function_exists('get_tax_meta_strip')){
-  function get_tax_meta_strip($term_id,$key,$multi = false){
-    $t_id = (is_object($term_id))? $term_id->term_id: $term_id;
-    $m = get_option( 'tax_meta_'.$t_id);
-    if (isset($m[$key])){
-      return is_array($m[$key])? $m[$key] : stripslashes($m[$key]);
-    }else{
+if ( !function_exists( 'get_tax_meta_strip' ) ) {
+  function get_tax_meta_strip( $term_id, $key, $multi = false ) {
+    $t_id = ( is_object( $term_id ) )? $term_id->term_id: $term_id;
+    $m = get_option( 'tax_meta_'.$t_id );
+    if ( isset( $m[$key] ) ) {
+      return is_array( $m[$key] )? $m[$key] : stripslashes( $m[$key] );
+    } else {
       return '';
     }
   }
 }
 //get all meta fields of a term
-if (!function_exists('get_tax_meta_all')){
-  function get_tax_meta_all( $term_id){
-    $t_id = (is_object($term_id))? $term_id->term_id: $term_id;
-    return get_option( 'tax_meta_'.$t_id,array());
+if ( !function_exists( 'get_tax_meta_all' ) ) {
+  function get_tax_meta_all( $term_id ) {
+    $t_id = ( is_object( $term_id ) )? $term_id->term_id: $term_id;
+    return get_option( 'tax_meta_'.$t_id, array() );
   }
 }
